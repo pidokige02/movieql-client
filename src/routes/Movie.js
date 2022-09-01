@@ -53,18 +53,45 @@ const Image = styled.div`
 
 export default function Movie() {
   const { id } = useParams(); // id parameter from URI
-  const { data, loading } = useQuery(GET_MOVIE, {
+  const { data, loading,
+      client: { cache },   // inside the client, we are going to get a cache
+  } = useQuery(GET_MOVIE, {
     variables: {  // the same format as we did in graphql server in variable section
       movieId: id,
     },
   });
   console.log(data, loading);
+  const onClick = () => {
+    cache.writeFragment({
+      id: `Movie:${id}`,
+      // fragment: gql`
+      //   fragment MovieFragment on Movie {
+      //     isLiked
+      //     title  // title 과 rating 도 cache 에 저장된다
+      //     rating
+      //   }
+      // `,
+      fragment: gql`
+        fragment MovieFragment on Movie {
+          isLiked
+        }
+      `,
+
+      data: {
+        isLiked: !data.movie.isLiked,
+        // title : "hello", // testing only
+        // rating : 10
+      },
+    });
+  };
   return (
     <Container>
       <Column>
         <Title>{loading ? "Loading..." : `${data.movie?.title}`}</Title>
         <Subtitle>⭐️ {data?.movie?.rating}</Subtitle>
-        <button>{data?.movie?.isLiked ? "Unlike" : "Like"}</button>
+        <button onClick={onClick}>
+          {data?.movie?.isLiked ? "Unlike" : "Like"}
+        </button>
       </Column>
       <Image bg={data?.movie?.medium_cover_image} />
     </Container>
